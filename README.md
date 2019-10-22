@@ -1,2 +1,1 @@
-# clueless
-Because MOS Said So.
+# HW1
