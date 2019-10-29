@@ -1,5 +1,5 @@
-from HW2\
-    .node import node as s # States
+from HW2.node import node as s # States
+import copy
 
 class nodeArray:
 
@@ -7,7 +7,6 @@ class nodeArray:
 
         self.root = root
         self.bSize = bSize
-        self.seen_states = []
         self.bad_states = []
 
         self.states_to_expand = [self.root]
@@ -18,9 +17,8 @@ class nodeArray:
     # Move from the East Bank to the West Bank if b = 0
     def move(self , current_root):
 
-        # Check if the State is possible to expand
         if (not self.checkState(current_root)):
-            return None
+            return
 
         current_m = current_root.getM()
         current_c = current_root.getC()
@@ -83,7 +81,7 @@ class nodeArray:
     # False if state is not to be expanded further
     def checkState(self, state):
 
-        if state in self.seen_states:
+        if (self.hasLoops(state)):
             return False
 
         if self.isBadState(state):
@@ -108,18 +106,27 @@ class nodeArray:
             # Make an action and add to the states to expand
             possible_nodes = self.move(current_root)
 
-            # Add it to the seen states list
-            self.seen_states.append(current_root)
-
             # Connect the new states with its parent
             current_root.setChildren(possible_nodes)
 
+
+            states_to_remove = []
             # Add the new states to the States to Expand List
             if (possible_nodes != None):
                 for state in possible_nodes:
+
+                    state.parent = current_root
+
+                    if (self.hasLoops(state)):
+                        states_to_remove.append(state)
+                        continue
+
                     self.counter = self.counter + 1
                     self.states_to_expand.append(state)
 
+                if (states_to_remove != None):
+                    for state in states_to_remove:
+                        possible_nodes.remove(state)
 
         # Print Done to Indicate All Possible Nodes are made
         print("DONE")
@@ -206,6 +213,20 @@ class nodeArray:
         result += str(missionaries_on_east) + "M, " + str(cannibals_on_east) + "C |"
 
         return result
+
+    def hasLoops(self, state):
+
+        tempNode = copy.deepcopy(state.parent)
+        if (tempNode == None): #This is the root node
+            return False
+
+        while tempNode != None:
+            if tempNode == state:
+                return True
+
+            tempNode = copy.deepcopy(tempNode.parent)
+
+        return False
 
     def isBadState(self , state):
 
