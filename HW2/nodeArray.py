@@ -1,5 +1,5 @@
 from HW2.node import node as s # States
-import copy
+from collections import deque
 
 class nodeArray:
 
@@ -9,7 +9,10 @@ class nodeArray:
         self.bSize = bSize
         self.bad_states = []
 
-        self.states_to_expand = [self.root]
+        self.seen = []
+        self.states_to_expand = deque([self.root])
+        self.goalStateLevel = 0
+        self.foundGoalState = False
         self.counter = 0
         pass
 
@@ -17,8 +20,14 @@ class nodeArray:
     # Move from the East Bank to the West Bank if b = 0
     def move(self , current_root):
 
-        if (not self.checkState(current_root)):
-            return
+        if (self.isGoalState(current_root)):
+            if self.foundGoalState == False:
+                self.goalStateLevel = self.getLevel(current_root)
+                self.foundGoalState = True
+                return
+
+        # self.i = self.i + 1;
+        # print(self.i)
 
         current_m = current_root.getM()
         current_c = current_root.getC()
@@ -40,14 +49,11 @@ class nodeArray:
                 # Some combination of them move in the boat
                 for m_in_boat in range(1, a_bSize):
 
-                    # Floor of dividing by 2 so m are always larger than the cannibals
-                    if (m_in_boat >= a_bSize // 2 ):
-
-                        # Check if they can be added
-                        # A_bSize - m_in_boat is c_in_boat
-                        # The number of missionaries should be greater or equal to the number of cannibals left on land
-                        if ( current_m >= m_in_boat and current_c >= (a_bSize - m_in_boat) ):
-                            posssible_states.append(s(current_m - m_in_boat , current_c - (a_bSize - m_in_boat) , 0))
+                    # Check if they can be added
+                    # A_bSize - m_in_boat is c_in_boat
+                    # The number of missionaries should be greater or equal to the number of cannibals left on land
+                    if ( current_m >= m_in_boat and current_c >= (a_bSize - m_in_boat) ):
+                        posssible_states.append(s(current_m - m_in_boat , current_c - (a_bSize - m_in_boat) , 0))
 
         # Move from East Coast to West Coast
         if (current_b == 0):
@@ -68,29 +74,29 @@ class nodeArray:
                 # Some combination of them move in the boat
                 for m_in_boat in range(1, a_bSize):
 
-                    # Floor of dividing by 2 so m are always larger than the cannibals
-                    if (m_in_boat >= a_bSize // 2):
-
-                        # Check if they can be added
-                        # A_bSize - m_in_boat is c_in_boat
-                        if (current_m_onEast >= m_in_boat and current_c_onEast >= (a_bSize - m_in_boat)):
-                            posssible_states.append(s(current_m + m_in_boat, current_c + (a_bSize - m_in_boat), 1))
+                    # Check if they can be added
+                    # A_bSize - m_in_boat is c_in_boat
+                    if (current_m_onEast >= m_in_boat and current_c_onEast >= (a_bSize - m_in_boat)):
+                        posssible_states.append(s(current_m + m_in_boat, current_c + (a_bSize - m_in_boat), 1))
 
         return  posssible_states
 
     # False if state is not to be expanded further
-    def checkState(self, state):
+    def checkIfStateIsBad(self, state):
+
+        # if state in self.seen :
+        #     return True
 
         if (self.hasLoops(state)):
-            return False
+            return True
 
         if self.isBadState(state):
-            return False
+            return True
 
         if (self.isGoalState(state)):
-            return False
+            return True
 
-        return True
+        return False
 
     # Create all State Space
     def createAllStateSpace(self):
@@ -98,10 +104,15 @@ class nodeArray:
         # To create all possible paths, we need to store the nodes
         # that need to be expanded and do so in a stack
 
-        while(self.states_to_expand != []):
+        while(self.states_to_expand):
 
             # Remove The Current State to Expand
-            current_root = self.states_to_expand.pop()
+            current_root = self.states_to_expand.popleft()
+
+            if (self.goalStateLevel != 0 and self.getLevel(current_root) >= self.goalStateLevel):
+                continue
+
+            # print (current_root)
 
             # Make an action and add to the states to expand
             possible_nodes = self.move(current_root)
@@ -109,15 +120,17 @@ class nodeArray:
             # Connect the new states with its parent
             current_root.setChildren(possible_nodes)
 
+            self.seen.append(current_root)
 
             states_to_remove = []
             # Add the new states to the States to Expand List
             if (possible_nodes != None):
                 for state in possible_nodes:
 
-                    state.parent = current_root
+                    state.parent.append(current_root)
+                    state.parent += current_root.parent
 
-                    if (self.hasLoops(state)):
+                    if (self.checkIfStateIsBad(state) and not self.isGoalState(state)):
                         states_to_remove.append(state)
                         continue
 
@@ -132,99 +145,20 @@ class nodeArray:
         print("DONE")
         print(self.counter)
 
-    def displayStatesAsATree(self):
-
-        # Collect All Elements and their connections
-        # A list of all nodes that need to be viewed
-        to_be_viewed_states = [self.root]
-        all_states = []
-        nodes = []
-        edges = []
-
-        id = 0
-
-        while (to_be_viewed_states != []):
-
-            # Pop the next state from the states
-            current_state = to_be_viewed_states.pop()
-
-            # Add the current_state to the already viewed state if not added yet
-            if (not current_state in all_states):
-                all_states.append(current_state)
-
-            # Add the node to the nodes and increment the id
-            # label = self.makeNodeLabels(current_state.getValue())
-            nodes.append({'data': {'id': str(id) , 'label': current_state.getValue() }})
-            id = id + 1
-
-            # Add the edge from child to parent
-            if current_state.getParent() != None:
-                edges.append({'data': {'source': str(current_state.getParent())
-                                                  , 'target': str(id - 1) }})
-                pass
-
-            # Find the Children of the states and add them to the to_be_viewed_state
-            children = current_state.getChildren()
-            if (children != None):
-                for state in children:
-                    state.setParent(id - 1)
-                    to_be_viewed_states.append(state)
-
-        import dash
-        import dash_cytoscape as cyto
-        import dash_html_components as html
-
-        app = dash.Dash(__name__)
-        app.layout = html.Div([
-            cyto.Cytoscape(
-                id='cytoscape',
-                elements= nodes + edges,
-                layout={'name': 'dagre'},
-                style={'width': '100%', 'height': '1000px'},
-            )
-        ])
-
-        # Load extra layouts
-        cyto.load_extra_layouts()
-
-        # Run the server
-        app.run_server(debug=True)
-
-    # Makes the node labels
-    # Input data is a tuple of length 3
-    def makeNodeLabels(self, data):
-
-
-        missionaries_on_west = int(data[2])
-        missionaries_on_east = self.root.getM() - missionaries_on_west
-
-        cannibals_on_west = int(data[6])
-        cannibals_on_east = self.root.getC() - cannibals_on_west
-
-        direction_of_boat = int(data[10])
-
-        result = str(missionaries_on_west) + "M, " + str(cannibals_on_west) + "C |"
-
-        if (direction_of_boat == 1):
-            result += " -> |"
-        else:
-            result += " <- |"
-
-        result += str(missionaries_on_east) + "M, " + str(cannibals_on_east) + "C |"
-
-        return result
-
     def hasLoops(self, state):
 
-        tempNode = copy.deepcopy(state.parent)
-        if (tempNode == None): #This is the root node
-            return False
+        # tempNode = copy.deepcopy(state.parent)
+        # if (tempNode == None): #This is the root node
+        #     return False
+        #
+        # while tempNode != None:
+        #     if tempNode == state:
+        #         return True
+        #
+        #     tempNode = copy.deepcopy(tempNode.parent)
 
-        while tempNode != None:
-            if tempNode == state:
-                return True
-
-            tempNode = copy.deepcopy(tempNode.parent)
+        if (state in state.parent):
+            return True
 
         return False
 
@@ -278,7 +212,6 @@ class nodeArray:
             children = current_state.getChildren()
             if (children != None):
                 for state in children:
-                    state.setParent(current_state)
                     to_be_viewed_states.append(state)
 
         # Seen Everything and still no solution
@@ -288,13 +221,13 @@ class nodeArray:
 
     def displayGoalState(self , state):
 
-        path = [state]
-        current_state = state
-
-        # Does not reach Root
-        while (current_state.getParent() != None):
-            current_state = current_state.getParent()
-            path.append(current_state)
+        path = state.getParent()
+        # current_state = state
+        #
+        # # Does not reach Root
+        # while (current_state.getParent() != None):
+        #     current_state = current_state.getParent()
+        #     path.append(current_state)
 
         path.reverse()
 
@@ -303,3 +236,6 @@ class nodeArray:
         for a_state in path:
             print(a_state)
         print("############################################")
+
+    def getLevel(self, state):
+        return len(state.parent)

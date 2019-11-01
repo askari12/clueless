@@ -10,7 +10,7 @@ class node:
         self.c = c
         self.b = b
 
-        self.parent = None
+        self.parent = []
         self.children = []
 
         pass
