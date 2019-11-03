@@ -285,7 +285,7 @@ class App extends Component {
                                                                   <path d="M3.00,103.00 l500.00,0.00 M3.00,203.00 l500.00,0.00 M3.00,303.00 l500.00,0.00 M3.00,403.00 l500.00,0.00 M103.00,3.00 l0.00,500.00 M203.00,3.00 l0.00,500.00 M303.00,3.00 l0.00,500.00 M403.00,3.00 l0.00,500.00" stroke="dimgray" vectorEffect="non-scaling-stroke"></path>
                                                                   <rect x="1.50" y="1.50" width="503.00" height="503.00" stroke="black" strokeWidth="3.00" fill="none"></rect>
                                                               </g>
-                                                              <text x="332" y="545" fill="red" fontSize="35">{this.state.date}/{this.state.month+1}/{this.state.year}</text>
+                                                              <text x="155" y="545" fill="red" fontSize="35">{this.state.date}/{this.state.month+1}/{this.state.year}   CLUELESS</text>
                                                           </svg>
                                                       </div>
                                                   </section>

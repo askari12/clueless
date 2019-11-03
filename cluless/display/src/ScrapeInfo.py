@@ -12,7 +12,6 @@ browser = wd.Firefox(executable_path=driver_path)
 # Reach the Puzzle Website
 browser.get(puzzle_website)
 
-
 # Start The Puzzle
 startButton = browser.find_element_by_class_name(start_button_class_name)
 startButton.click()
